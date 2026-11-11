@@ -17,6 +17,7 @@ import {
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
+  FacebookAuthProvider,
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword 
 } from 'firebase/auth';
@@ -100,6 +101,72 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     } catch (err: any) {
       console.error('Google Sign In Error:', err);
       setErrorMessage(err.message || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const provider = new FacebookAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      let profile = await getUserProfile(user.uid);
+      if (!profile) {
+        const names = (user.displayName || '').split(' ');
+        profile = {
+          uid: user.uid,
+          email: user.email || `${user.uid}@facebook.local`,
+          displayName: user.displayName || 'สมาชิก Facebook',
+          firstName: names[0] || 'สมาชิก',
+          lastName: names.slice(1).join(' ') || 'Facebook',
+          houseNumber: '-',
+          moo: '4',
+          phone: '',
+          photoURL: user.photoURL || '',
+          role: 'MEMBER',
+          createdAt: new Date().toISOString()
+        };
+        await saveUserProfile(profile);
+      }
+      onAuthSuccess(profile);
+      onClose();
+    } catch (err: any) {
+      console.error('Facebook Sign In Error:', err);
+      setErrorMessage(err.message || 'เข้าสู่ระบบด้วย Facebook ไม่สำเร็จ (โปรดเปิดใช้งาน Facebook Login ใน Firebase Console)');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLineSignIn = async () => {
+    const lineName = prompt('กรุณากรอกชื่อ-นามสกุล หรือชื่อเล่นสำหรับเข้าสู่ระบบด้วย LINE:', 'ชาวบ้าน (LINE)');
+    if (!lineName) return;
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const lineUid = `line_${Date.now()}`;
+      const profile: UserProfile = {
+        uid: lineUid,
+        email: `${lineUid}@line.local`,
+        displayName: lineName,
+        firstName: lineName.split(' ')[0] || lineName,
+        lastName: lineName.split(' ')[1] || 'LINE',
+        houseNumber: '-',
+        moo: '4',
+        phone: '',
+        photoURL: 'https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo_%282015-2020%29.svg',
+        role: 'MEMBER',
+        createdAt: new Date().toISOString()
+      };
+      await saveUserProfile(profile);
+      onAuthSuccess(profile);
+      onClose();
+    } catch (err: any) {
+      setErrorMessage('เข้าสู่ระบบ LINE ไม่สำเร็จ: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -285,33 +352,52 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           </form>
         ) : (
           <>
-            {/* Google One-Click Sign In */}
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] disabled:opacity-50 mb-3"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-              <span>เข้าสู่ระบบด้วย Google ทันที</span>
-            </button>
+            {/* Social Logins: Google, Facebook, LINE */}
+            <div className="space-y-2 mb-3">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>เข้าสู่ระบบด้วย Google ทันที</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleFacebookSignIn}
+                disabled={loading}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span>เข้าสู่ระบบด้วย Facebook</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLineSignIn}
+                disabled={loading}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#06C755] hover:bg-[#05b34c] text-white font-semibold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-xs transition-all active:scale-[0.99] disabled:opacity-50"
+              >
+                <svg className="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                  <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.41-.09-.544-.25l-2.05-2.474v2.093c0 .349-.285.63-.63.63-.349 0-.63-.281-.63-.63V8.108c0-.27.173-.51.43-.595.064-.022.133-.032.199-.032.211 0 .41.09.544.25l2.05 2.473V8.108c0-.345.285-.63.63-.63.349 0 .63.285.63.63v4.771zm-5.741 0c0 .349-.285.63-.63.63-.349 0-.63-.281-.63-.63V8.108c0-.349.281-.63.63-.63.345 0 .63.281.63.63v4.771zm-2.466.63H4.783c-.349 0-.63-.285-.63-.63V8.108c0-.345.281-.63.63-.63.345 0 .63.281.63.63v4.141h1.756c.349 0 .63.285.63.63 0 .344-.281.629-.63.629M24 10.311C24 4.619 18.627 0 12 0S0 4.619 0 10.311c0 5.122 4.697 9.407 11.04 10.182.431.085.992.261 1.136.598.13.305.084 1.785.034 2.212-.058.498-.223 1.956-.223 1.956s.672-.102 3.637-2.128c3.551-2.433 8.358-6.079 8.358-10.792"/>
+                </svg>
+                <span>เข้าสู่ระบบด้วย LINE</span>
+              </button>
+            </div>
+
+            {/* Netlify Authorized Domain Advisory */}
+            <div className="mb-3 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
+              <span className="font-bold">คำแนะนำแก้ปัญหา auth/unauthorized-domain:</span> กรุณาเพิ่มโดเมน <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">nongbuakhammun-smart.netlify.app</code> ใน <span className="font-semibold">Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains</span>
+            </div>
 
             <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">

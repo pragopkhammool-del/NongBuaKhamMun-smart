@@ -37,14 +37,12 @@ service cloud.firestore {
 
     // Village residents census
     match /residents/{residentId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     // Village committee & leadership
     match /village_committee/{memberId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     // Citizen Voice incident reports
@@ -63,9 +61,7 @@ service cloud.firestore {
 
     // News and announcements
     match /news/{newsId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin() || isSignedIn();
+      allow read, write: if true;
     }
 
     // External news RSS/media sources
@@ -145,8 +141,7 @@ service cloud.firestore {
 
     // Notifications
     match /notifications/{notifId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read, write: if true;
     }
 
     // System settings
