@@ -54,6 +54,48 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, currentUser }) => {
   const [sourceUrl, setSourceUrl] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('กรุณาเลือกไฟล์รูปภาพเท่านั้นครับ');
+      return;
+    }
+    setIsProcessingImage(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setCoverUrl(dataUrl);
+        setIsProcessingImage(false);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN' || currentUser?.email === 'pragopkhammool@gmail.com';
 
@@ -530,13 +572,32 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, currentUser }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">URL รูปภาพหน้าปก (ไม่บังคับ)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">รูปภาพหน้าปกข่าว (อัปโหลดจากเครื่อง หรือใส่ URL)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-[#164B3C] hover:file:bg-emerald-100 cursor-pointer mb-2"
+                />
+                {isProcessingImage && <p className="text-xs text-emerald-700 mb-2 animate-pulse font-medium">กำลังย่อและอัปโหลดรูปภาพ...</p>}
+                {coverUrl && (
+                  <div className="mb-2 relative w-full h-32 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                    <img src={coverUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setCoverUrl('')}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 text-xs hover:bg-black"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
                 <input
                   type="url"
                   value={coverUrl}
                   onChange={(e) => setCoverUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#23865B]"
+                  placeholder="หรือวางลิงก์รูปภาพ (https://images.unsplash.com/...)"
+                  className="w-full text-xs px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#23865B]"
                 />
               </div>
 

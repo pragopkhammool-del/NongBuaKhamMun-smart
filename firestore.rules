@@ -64,7 +64,8 @@ service cloud.firestore {
     // News and announcements
     match /news/{newsId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isSignedIn();
     }
 
     // External news RSS/media sources
