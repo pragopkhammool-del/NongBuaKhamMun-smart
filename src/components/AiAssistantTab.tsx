@@ -140,6 +140,60 @@ export const AiAssistantTab: React.FC<AiAssistantTabProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
+// Client-side Village Knowledge Base Engine (Fallback for static hosts like Netlify)
+function generateClientVillageAnswer(
+  prompt: string, 
+  news: NewsItem[], 
+  events: VillageEvent[], 
+  committee: CommitteeMember[], 
+  marketItems: MarketplaceItem[], 
+  reports: Report[]
+): string {
+  const p = prompt.toLowerCase();
+
+  if (p.includes('ผู้ใหญ่บ้าน') || p.includes('ประธาน') || p.includes('หัวหน้า') || p.includes('เสนบี้')) {
+    return 'ผู้ใหญ่บ้านและประธานกรรมการหมู่บ้านหนองบัวคำมูล หมู่ที่ 4 คือ **นายธนพล เสนบี้** เบอร์โทรศัพท์ติดต่อ: **081-234-5678** ครับ สามารถติดต่อสอบถามเรื่องงานปกครอง ความสงบเรียบร้อย และเอกสารราชการได้ตลอดครับ';
+  }
+
+  if (p.includes('กรรมการ') || p.includes('รายชื่อ') || p.includes('ทำเนียบ') || p.includes('รองประธาน') || p.includes('เหรัญญิก')) {
+    if (committee.length > 0) {
+      const top5 = committee.slice(0, 5).map(c => `- ${c.prefix}${c.firstName} ${c.lastName} (${c.position}) โทร: ${c.phone}`).join('\n');
+      return `คณะกรรมการหมู่บ้านหนองบัวคำมูล ม.4 มีทั้งหมด 15 ท่าน โดยมีผู้นำสำคัญดังนี้ครับ:\n${top5}\n\nท่านสามารถกดดูรายชื่อและเบอร์ติดต่อเต็มทั้ง 15 ท่านได้ที่เมนู "ผู้นำชุมชน" ครับ`;
+    }
+    return 'ทำเนียบคณะกรรมการหมู่บ้านหนองบัวคำมูล ม.4 มีทั้งหมด 15 ท่าน นำโดย **นายธนพล เสนบี้** (ผู้ใหญ่บ้าน/ประธาน) นายสำรอง คำมูล และนายทองพูล คำมูล (รองประธาน) สามารถดูรายละเอียดทั้งหมดได้ที่เมนู "ผู้นำชุมชน" ครับ';
+  }
+
+  if (p.includes('ประชุม') || p.includes('กิจกรรม') || p.includes('ปฏิทิน') || p.includes('งาน')) {
+    if (events.length > 0) {
+      const evStr = events.slice(0, 3).map(e => `- **${e.title}** วันที่ ${e.eventDate} เวลา ${e.startTime} น. ณ ${e.location}`).join('\n');
+      return `กิจกรรมและนัดหมายประชุมล่าสุดของหมู่ 4 มีดังนี้ครับ:\n${evStr}\n\nดูตารางปฏิทินเต็มและกดลงทะเบียนเข้าร่วมได้ที่เมนู "กิจกรรม" (ปฏิทินชุมชน ม.4) ครับ`;
+    }
+    return 'ท่านสามารถตรวจสอบตารางปฏิทินกิจกรรม การนัดประชุมประชาคม และกดเข้าร่วมกิจกรรมได้ที่เมนู "กิจกรรม" (ปฏิทินชุมชน ม.4) ครับ';
+  }
+
+  if (p.includes('ข่าว') || p.includes('ประกาศ') || p.includes('แจ้งเตือน')) {
+    if (news.length > 0) {
+      const newsStr = news.slice(0, 3).map(n => `- **${n.title}** (${n.category})`).join('\n');
+      return `ข่าวสารและประกาศสำคัญล่าสุดจากหมู่บ้านหนองบัวคำมูล ม.4:\n${newsStr}\n\nอ่านรายละเอียดเพิ่มเติมได้ที่เมนู "ข่าวสาร" ครับ`;
+    }
+    return 'ท่านสามารถติดตามข่าวสาร ประกาศแจ้งเตือนภัย และข่าวกิจกรรมล่าสุดของหมู่บ้านได้ที่เมนู "ข่าวสาร" ครับ';
+  }
+
+  if (p.includes('ขาย') || p.includes('ตลาด') || p.includes('ผัก') || p.includes('ซื้อ') || p.includes('สินค้า')) {
+    if (marketItems.length > 0) {
+      const mStr = marketItems.slice(0, 4).map(m => `- **${m.title}** ราคา ฿${m.price}/${m.unit || 'ชิ้น'} (ผู้ขาย: ${m.sellerName} โทร: ${m.sellerPhone})`).join('\n');
+      return `สินค้าชุมชน ม.4 ที่กำลังเปิดขายในขณะนี้:\n${mStr}\n\nสั่งซื้อหรือลงประกาศขายสินค้าของท่านเพิ่มเติมได้ที่เมนู "ตลาดชุมชน" ครับ`;
+    }
+    return 'ตลาดชุมชนบ้านหนองบัวคำมูล ม.4 มีผักสดอินทรีย์ สินค้าเกษตร และอาหารปลอดสารพิษ วางจำหน่ายโดยชาวบ้านในหมู่ 4 สามารถเข้าชมได้ที่เมนู "ตลาด" ครับ';
+  }
+
+  if (p.includes('แจ้งเหตุ') || p.includes('ไฟดับ') || p.includes('น้ำไม่ไหล') || p.includes('ถนนชำรุด') || p.includes('ร้องเรียน') || p.includes('ขยะ')) {
+    return 'หากพบปัญหาโคมไฟถนนดับ น้ำประปาไม่ไหล ถนนชำรุด หรือเหตุเดือดร้อน สามารถกดแจ้งผ่านระบบ **Citizen Voice** ที่เมนู "แจ้งเหตุ" ได้ทันทีครับ ระบบจะมีรหัสติดตามเรื่อง เช่น MOO4-2026-XXXXX หรือโทรแจ้งผู้ใหญ่บ้านธนพล เสนบี้ 081-234-5678 ครับ';
+  }
+
+  return `สวัสดีครับ! ผมคือน้องสมาร์ท ม.4 ผู้ช่วยดิจิทัลประจำบ้านหนองบัวคำมูล หมู่ที่ 4 ตำบลคูคำ อำเภอซำสูง จังหวัดขอนแก่น\n\nท่านสามารถสอบถามข้อมูลได้หลายด้าน เช่น:\n- ข้อมูลผู้ใหญ่บ้านและคณะกรรมการ 15 ท่าน\n- ประกาศข่าวสารและกำหนดการประชุมหมู่บ้าน\n- รายการสินค้าในตลาดชุมชน ม.4\n- ขั้นตอนการแจ้งเหตุร้องเรียนและติดตามเรื่อง\n\nหรือติดต่อผู้ใหญ่บ้าน นายธนพล เสนบี้ โทร 081-234-5678 ได้โดยตรงครับ`;
+}
+
   const handleSendMessage = async (queryText?: string) => {
     const textToSend = queryText || inputText;
     if (!textToSend.trim() || isLoading) return;
@@ -166,10 +220,18 @@ export const AiAssistantTab: React.FC<AiAssistantTabProps> = ({
 
     setMessages(prev => [...prev, assistantMsg]);
 
+    const localAnswer = generateClientVillageAnswer(
+      textToSend.trim(),
+      news,
+      events,
+      committee,
+      marketItems,
+      reports
+    );
+
     try {
-      // Ground prompt with real Firestore data
       const villageContext = {
-        villageName: 'บ้านหนองบัวคำมูล หมู่ที่ 4',
+        villageName: 'บ้านหนองบัวคำมูล หมู่ที่ 4 ต.คูคำ อ.ซำสูง จ.ขอนแก่น',
         headman: {
           name: 'นายธนพล เสนบี้',
           position: 'ผู้ใหญ่บ้าน / ประธานกรรมการหมู่บ้าน',
@@ -179,35 +241,24 @@ export const AiAssistantTab: React.FC<AiAssistantTabProps> = ({
           order: c.order,
           name: `${c.prefix}${c.firstName} ${c.lastName}`,
           position: c.position,
-          phone: c.phone,
-          responsibilities: c.responsibilities
+          phone: c.phone
         })),
         recentNews: news.slice(0, 5).map(n => ({
           title: n.title,
-          category: n.category,
-          source: n.newsSource,
-          content: n.content,
-          date: n.createdAt
+          category: n.category
         })),
         upcomingEvents: events.slice(0, 5).map(e => ({
           title: e.title,
           date: e.eventDate,
           time: e.startTime,
-          location: e.location,
-          description: e.description
+          location: e.location
         })),
         marketItems: marketItems.slice(0, 6).map(m => ({
           title: m.title,
           price: `${m.price} บาท/${m.unit || 'ชิ้น'}`,
           seller: m.sellerName,
-          phone: m.sellerPhone,
-          status: m.status
-        })),
-        recentReportsSummary: {
-          total: reports.length,
-          inProgress: reports.filter(r => r.status === 'IN_PROGRESS').length,
-          resolved: reports.filter(r => r.status === 'RESOLVED').length
-        }
+          phone: m.sellerPhone
+        }))
       };
 
       const response = await fetch('/api/chat/stream', {
@@ -219,8 +270,8 @@ export const AiAssistantTab: React.FC<AiAssistantTabProps> = ({
         })
       });
 
-      if (!response.body) {
-        throw new Error('Streaming response body is missing');
+      if (!response.ok || !response.body) {
+        throw new Error('Streaming endpoint not available or returned non-200');
       }
 
       const reader = response.body.getReader();
@@ -248,14 +299,9 @@ export const AiAssistantTab: React.FC<AiAssistantTabProps> = ({
                 setMessages(prev =>
                   prev.map(m => (m.id === assistantMsgId ? { ...m, text: updatedText } : m))
                 );
-              } else if (parsed.error) {
-                accumulatedText = parsed.error;
-                setMessages(prev =>
-                  prev.map(m => (m.id === assistantMsgId ? { ...m, text: accumulatedText } : m))
-                );
               }
             } catch {
-              // ignore JSON parse errors on partial chunks
+              // ignore partial chunk JSON parse errors
             }
           }
         }
@@ -263,41 +309,14 @@ export const AiAssistantTab: React.FC<AiAssistantTabProps> = ({
 
       if (!accumulatedText.trim()) {
         setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantMsgId
-              ? { ...m, text: 'ขออภัยครับ ไม่สามารถสร้างคำตอบได้ในขณะนี้' }
-              : m
-          )
+          prev.map(m => (m.id === assistantMsgId ? { ...m, text: localAnswer } : m))
         );
       }
-    } catch (err: any) {
-      console.warn('Streaming chat error, falling back to standard endpoint:', err);
-      try {
-        const fallbackRes = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: textToSend.trim(),
-            villageContext: {
-              villageName: 'บ้านหนองบัวคำมูล หมู่ที่ 4',
-              headman: 'นายธนพล เสนบี้'
-            }
-          })
-        });
-        const fallbackData = await fallbackRes.json();
-        const replyText = fallbackData.reply || fallbackData.error || 'ขออภัยครับ เกิดข้อขัดข้องในการเชื่อมต่อ';
-        setMessages(prev =>
-          prev.map(m => (m.id === assistantMsgId ? { ...m, text: replyText } : m))
-        );
-      } catch {
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantMsgId
-              ? { ...m, text: 'ขออภัยครับ เกิดข้อขัดข้องในการเชื่อมต่อระบบ AI กรุณาลองใหม่อีกครั้งครับ' }
-              : m
-          )
-        );
-      }
+    } catch {
+      // Fallback for Netlify static deployment or serverless without node express runtime
+      setMessages(prev =>
+        prev.map(m => (m.id === assistantMsgId ? { ...m, text: localAnswer } : m))
+      );
     } finally {
       setIsLoading(false);
     }
