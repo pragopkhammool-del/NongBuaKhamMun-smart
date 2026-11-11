@@ -72,6 +72,28 @@ function generateLocalVillageAnswer(prompt: string, context: any): string {
   return `สวัสดีครับ! ผมคือน้องสมาร์ท ม.4 ผู้ช่วยดิจิทัลประจำบ้านหนองบัวคำมูล หมู่ที่ 4\n\nท่านสามารถสอบถามข้อมูลได้หลายด้าน เช่น:\n- ข้อมูลผู้ใหญ่บ้านและคณะกรรมการ 15 ท่าน\n- ประกาศข่าวสารและกำหนดการประชุมหมู่บ้าน\n- รายการสินค้าในตลาดชุมชน ม.4\n- ขั้นตอนการแจ้งเหตุร้องเรียนและติดตามเรื่อง\n\nหรือติดต่อผู้ใหญ่บ้าน นายธนพล เสนบี้ โทร 081-234-5678 ได้โดยตรงครับ`;
 }
 
+// Helper to retrieve valid Gemini API key from environment variables
+function getValidApiKey(): string | null {
+  const key =
+    process.env.GEMINI_API_KEY ||
+    process.env.MY_GEMINI_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY ||
+    process.env.API_KEY;
+
+  if (!key) return null;
+  const trimmed = key.trim();
+  if (
+    trimmed === '' ||
+    trimmed === 'MY_GEMINI_API_KEY' ||
+    trimmed === 'YOUR_GEMINI_API_KEY' ||
+    trimmed === 'undefined' ||
+    trimmed === 'null'
+  ) {
+    return null;
+  }
+  return trimmed;
+}
+
 // Gemini AI Assistant Streaming Endpoint (ตอบกลับแบบ Streaming Real-Time)
 app.post('/api/chat/stream', async (req, res) => {
   const { prompt, villageContext } = req.body;
@@ -83,7 +105,7 @@ app.post('/api/chat/stream', async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getValidApiKey();
 
   if (!apiKey) {
     const fallbackAns = generateLocalVillageAnswer(prompt, villageContext);
@@ -118,7 +140,7 @@ ${JSON.stringify(villageContext || {}, null, 2)}
 3. ภาษาไทยสุภาพ นอบน้อม มีหางเสียง (ครับ/ค่ะ)`;
 
     const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-flash-latest',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: {
         systemInstruction
@@ -137,7 +159,6 @@ ${JSON.stringify(villageContext || {}, null, 2)}
       const fallbackAns = generateLocalVillageAnswer(prompt, villageContext);
       res.write(`data: ${JSON.stringify({ text: fallbackAns })}\n\n`);
     }
-
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {
@@ -156,7 +177,8 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ error: 'Prompt is required' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getValidApiKey();
+
   if (!apiKey) {
     return res.json({ reply: generateLocalVillageAnswer(prompt, villageContext) });
   }
@@ -182,7 +204,7 @@ ${JSON.stringify(villageContext || {}, null, 2)}
 2. ภาษาไทยสุภาพ นอบน้อม มีหางเสียง (ครับ/ค่ะ)`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: {
         systemInstruction
