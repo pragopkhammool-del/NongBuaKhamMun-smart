@@ -26,35 +26,35 @@ interface MapTabProps {
   onSelectTab: (tab: string) => void;
 }
 
-// Fixed coordinates for Ban Nong Bua Kham Mool Moo 4 center
-const VILLAGE_CENTER = { lat: 18.7883, lng: 98.9853 };
+// Fixed coordinates for Ban Nong Bua Kham Mool Moo 4 center (ต.คูคำ อ.ซำสูง จ.ขอนแก่น)
+const VILLAGE_CENTER = { lat: 16.505663, lng: 103.005112 };
 
-// Key Village Landmarks
+// Key Village Landmarks (บ้านหนองบัวคำมูล ม.4 ต.คูคำ อ.ซำสูง จ.ขอนแก่น)
 const VILLAGE_LANDMARKS = [
   {
     id: 'landmark-1',
     name: 'ศาลาประชาคมบ้านหนองบัวคำมูล ม.4',
     type: 'COMMUNITY_CENTER',
-    lat: 18.7883,
-    lng: 98.9853,
-    description: 'ศูนย์กลางการประชุมประชาคม กองทุนหมู่บ้าน และจุดบริการราชการ',
+    lat: 16.505663,
+    lng: 103.005112,
+    description: 'ศูนย์กลางการประชุมประชาคม กองทุนหมู่บ้าน และจุดบริการราชการ ต.คูคำ อ.ซำสูง',
     color: '#164B3C'
   },
   {
     id: 'landmark-2',
     name: 'วัดหนองบัวคำมูล',
     type: 'TEMPLE',
-    lat: 18.7895,
-    lng: 98.9870,
+    lat: 16.506800,
+    lng: 103.006500,
     description: 'ศูนย์รวมจิตใจ สถานที่จัดงานบุญประเพณี และลานกิจกรรมชุมชน',
     color: '#F39C12'
   },
   {
     id: 'landmark-3',
-    name: 'โรงพยาบาลส่งเสริมสุขภาพตำบล (รพ.สต.) หนองบัว',
+    name: 'โรงพยาบาลส่งเสริมสุขภาพตำบล (รพ.สต.) คูคำ',
     type: 'HEALTH_CENTER',
-    lat: 18.7865,
-    lng: 98.9840,
+    lat: 16.504200,
+    lng: 103.003800,
     description: 'จุดตรวจรักษาเบื้องต้น ศูนย์ประสานงาน อสม. และบริการสาธารณสุข',
     color: '#E74C3C'
   },
@@ -62,8 +62,8 @@ const VILLAGE_LANDMARKS = [
     id: 'landmark-4',
     name: 'จุดรวมพลและศูนย์ช่วยเหลือฉุกเฉิน ม.4',
     type: 'EVAC_POINT',
-    lat: 18.7872,
-    lng: 98.9880,
+    lat: 16.505100,
+    lng: 103.007200,
     description: 'จุดรวมพลยามเกิดภัยธรรมชาติ อัคคีภัย หรือเหตุฉุกเฉิน',
     color: '#3498DB'
   }
@@ -135,18 +135,31 @@ export const MapTab: React.FC<MapTabProps> = ({ reports, onSelectTab }) => {
           </p>
         </div>
 
-        {/* Locate Me button */}
-        <button
-          onClick={handleLocateMe}
-          disabled={isLocating}
-          className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-xl backdrop-blur-md border border-white/20 transition-all flex items-center space-x-1.5 flex-shrink-0"
-        >
-          <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">{isLocating ? 'ค้นหา...' : 'ตำแหน่งฉัน'}</span>
-        </button>
+        {/* Locate Me & Google Maps App Quick Buttons */}
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          <a
+            href="https://maps.app.goo.gl/vP2DMndeGVAj5iKk6"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl shadow-sm transition-transform active:scale-95 flex items-center space-x-1.5"
+            title="นำทางไปยังบ้านหนองบัวคำมูล ม.4 บน Google Maps"
+          >
+            <MapPin className="w-3.5 h-3.5 text-slate-900" />
+            <span>นำทาง Google Maps</span>
+          </a>
+
+          <button
+            onClick={handleLocateMe}
+            disabled={isLocating}
+            className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-xl backdrop-blur-md border border-white/20 transition-all flex items-center space-x-1.5"
+          >
+            <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{isLocating ? 'ค้นหา...' : 'ตำแหน่งฉัน'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter and Legend Controls */}
+      {/* Map View Toggle & Filter Bar */}
       <div className="bg-white rounded-2xl p-3 shadow-xs border border-slate-100 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-2">
           <Filter className="w-4 h-4 text-slate-400" />
@@ -175,14 +188,14 @@ export const MapTab: React.FC<MapTabProps> = ({ reports, onSelectTab }) => {
             />
             <span>สถานที่สำคัญ</span>
           </label>
-          <span className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-            <span>ดำเนินการ</span>
-          </span>
-          <span className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span>แก้ไขแล้ว</span>
-          </span>
+          <a
+            href="https://maps.app.goo.gl/vP2DMndeGVAj5iKk6"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#23865B] font-bold hover:underline flex items-center space-x-0.5"
+          >
+            <span>นำทาง Google Maps ม.4</span>
+          </a>
         </div>
       </div>
 

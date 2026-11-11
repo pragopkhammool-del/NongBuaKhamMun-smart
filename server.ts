@@ -21,28 +21,78 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// Local Intelligent Answer Generator for Village Context (Fallback if API unavailable)
+function generateLocalVillageAnswer(prompt: string, context: any): string {
+  const p = prompt.toLowerCase();
+  
+  if (p.includes('ผู้ใหญ่บ้าน') || p.includes('ประธาน') || p.includes('หัวหน้า') || p.includes('เสนบี้')) {
+    return 'ผู้ใหญ่บ้านและประธานกรรมการหมู่บ้านหนองบัวคำมูล หมู่ที่ 4 คือ **นายธนพล เสนบี้** เบอร์โทรศัพท์ติดต่อ: **081-234-5678** ครับ สามารถติดต่อสอบถามเรื่องงานปกครอง ความสงบเรียบร้อย และเอกสารราชการได้ตลอดครับ';
+  }
+
+  if (p.includes('กรรมการ') || p.includes('รายชื่อ') || p.includes('ทำเนียบ') || p.includes('รองประธาน') || p.includes('เหรัญญิก')) {
+    const committeeList = context?.committee || [];
+    if (committeeList.length > 0) {
+      const top5 = committeeList.slice(0, 5).map((c: any) => `- ${c.name} (${c.position}) โทร: ${c.phone}`).join('\n');
+      return `คณะกรรมการหมู่บ้านหนองบัวคำมูล ม.4 มีทั้งหมด 15 ท่าน โดยมีผู้นำสำคัญดังนี้ครับ:\n${top5}\n\nท่านสามารถดูรายชื่อเต็มทั้ง 15 ท่านได้ที่เมนู "ผู้นำชุมชน" ครับ`;
+    }
+    return 'ทำเนียบคณะกรรมการหมู่บ้านหนองบัวคำมูล ม.4 มีทั้งหมด 15 ท่าน นำโดย **นายธนพล เสนบี้** (ผู้ใหญ่บ้าน) นายสำรอง คำมูล และนายทองพูล คำมูล (รองประธาน) สามารถดูรายละเอียดทั้งหมดได้ที่เมนู "ผู้นำชุมชน" ครับ';
+  }
+
+  if (p.includes('ประชุม') || p.includes('กิจกรรม') || p.includes('ปฏิทิน') || p.includes('งาน')) {
+    const events = context?.upcomingEvents || [];
+    if (events.length > 0) {
+      const evStr = events.map((e: any) => `- **${e.title}** วันที่ ${e.date} เวลา ${e.time} น. ณ ${e.location}`).join('\n');
+      return `กิจกรรมและนัดหมายประชุมล่าสุดของหมู่ 4 มีดังนี้ครับ:\n${evStr}\n\nดูตารางเต็มได้ที่เมนู "ปฏิทินกิจกรรม" ครับ`;
+    }
+    return 'กิจกรรมชุมชนล่าสุด สามารถตรวจสอบตารางปฏิทิน การนัดประชุมประชาคม และลงทะเบียนเข้าร่วมได้ที่เมนู "กิจกรรม" (ปฏิทินชุมชน ม.4) ครับ';
+  }
+
+  if (p.includes('ข่าว') || p.includes('ประกาศ') || p.includes('แจ้งเตือน')) {
+    const news = context?.recentNews || [];
+    if (news.length > 0) {
+      const newsStr = news.slice(0, 3).map((n: any) => `- **${n.title}** (${n.category})`).join('\n');
+      return `ข่าวสารและประกาศสำคัญล่าสุดจากหมู่บ้านหนองบัวคำมูล ม.4:\n${newsStr}\n\nอ่านรายละเอียดเพิ่มเติมได้ที่เมนู "ข่าวสาร" ครับ`;
+    }
+    return 'ท่านสามารถติดตามข่าวสาร Announcements ประกาศแจ้งเตือนภัย และข่าวกิจกรรมล่าสุดของหมู่บ้านได้ที่เมนู "ข่าวสาร" ครับ';
+  }
+
+  if (p.includes('ขาย') || p.includes('ตลาด') || p.includes('ผัก') || p.includes('ซื้อ')) {
+    const market = context?.marketItems || [];
+    if (market.length > 0) {
+      const mStr = market.slice(0, 4).map((m: any) => `- **${m.title}** ราคา ${m.price} (ผู้ขาย: ${m.seller} โทร: ${m.phone})`).join('\n');
+      return `สินค้าชุมชน ม.4 ที่กำลังเปิดขายในขณะนี้:\n${mStr}\n\nสั่งซื้อหรือลงขายสินค้าเพิ่มเติมได้ที่เมนู "ตลาดชุมชน" ครับ`;
+    }
+    return 'ตลาดชุมชนบ้านหนองบัวคำมูล ม.4 มีผักสดอินทรีย์ สินค้าเกษตร และอาหารปลอดสารพิษ วางจำหน่ายโดยชาวบ้านในหมู่ 4 สามารถเข้าชมได้ที่เมนู "ตลาด" ครับ';
+  }
+
+  if (p.includes('แจ้งเหตุ') || p.includes('ไฟดับ') || p.includes('น้ำไม่ไหล') || p.includes('ถนนชำรุด') || p.includes('ร้องเรียน')) {
+    return 'หากพบปัญหาโคมไฟถนนดับ น้ำประปาไม่ไหล ถนนชำรุด หรือเหตุเดือดร้อน สามารถกดแจ้งผ่านระบบ **Citizen Voice** ที่เมนู "แจ้งเหตุ" ได้ทันทีครับ ระบบจะมีรหัสติดตามเรื่อง เช่น MOO4-2026-XXXXX หรือแจ้งผู้ใหญ่บ้านธนพล เสนบี้ โทร 081-234-5678 ครับ';
+  }
+
+  return `สวัสดีครับ! ผมคือน้องสมาร์ท ม.4 ผู้ช่วยดิจิทัลประจำบ้านหนองบัวคำมูล หมู่ที่ 4\n\nท่านสามารถสอบถามข้อมูลได้หลายด้าน เช่น:\n- ข้อมูลผู้ใหญ่บ้านและคณะกรรมการ 15 ท่าน\n- ประกาศข่าวสารและกำหนดการประชุมหมู่บ้าน\n- รายการสินค้าในตลาดชุมชน ม.4\n- ขั้นตอนการแจ้งเหตุร้องเรียนและติดตามเรื่อง\n\nหรือติดต่อผู้ใหญ่บ้าน นายธนพล เสนบี้ โทร 081-234-5678 ได้โดยตรงครับ`;
+}
+
 // Gemini AI Assistant Streaming Endpoint (ตอบกลับแบบ Streaming Real-Time)
 app.post('/api/chat/stream', async (req, res) => {
+  const { prompt, villageContext } = req.body;
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ error: 'Prompt is required' });
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    const fallbackAns = generateLocalVillageAnswer(prompt, villageContext);
+    res.write(`data: ${JSON.stringify({ text: fallbackAns })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    return res.end();
+  }
+
   try {
-    const { prompt, villageContext } = req.body;
-    if (!prompt || typeof prompt !== 'string') {
-      return res.status(400).json({ error: 'Prompt is required' });
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.write(`data: ${JSON.stringify({ text: 'ขออภัยครับ ยังไม่ได้ตั้งค่า GEMINI_API_KEY ในระบบ กรุณาตรวจสอบการตั้งค่า Secrets เพื่อเปิดใช้งาน AI ผู้ช่วยเต็มรูปแบบครับ' })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      return res.end();
-    }
-
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
     const ai = new GoogleGenAI({
       apiKey,
       httpOptions: {
@@ -59,36 +109,41 @@ app.post('/api/chat/stream', async (req, res) => {
 - ชื่อหมู่บ้าน: บ้านหนองบัวคำมูล หมู่ที่ 4
 - ผู้ใหญ่บ้าน / ประธานกรรมการหมู่บ้าน: นายธนพล เสนบี้ (โทร 081-234-5678)
 
-ข้อมูลปัจจุบันของหมู่บ้านดึงสดจากระบบฐานข้อมูล Cloud Firestore:
+ข้อมูลปัจจุบันดึงสดจากระบบฐานข้อมูล Cloud Firestore:
 ${JSON.stringify(villageContext || {}, null, 2)}
 
 กฎการตอบแบบรวดเร็วและเรียลไทม์:
-1. ตอบตรงคำถามทันที สั้นกระชับได้ใจความ ชัดเจน ไม่ต้องเกริ่นอารัมภบทยาว
-2. ใช้ข้อมูลตามจริงจากฐานข้อมูล Firestore ข้างต้นเสมอ เช่น ผู้ใหญ่บ้านชื่อนายธนพล เสนบี้ (โทร 081-234-5678), คณะกรรมการ 15 ท่าน, ข่าวประกาศ, วันเวลากิจกรรม, รายการตลาดชุมชน, รายงานแจ้งเหตุ
-3. หากไม่มีข้อมูลในระบบ ให้ตอบอย่างสุภาพสั้นๆ ว่า "ขณะนี้ยังไม่มีข้อมูลเรื่องนี้ในระบบฐานข้อมูลหมู่บ้านครับ" และแนะนำให้ติดต่อผู้ใหญ่บ้าน นายธนพล เสนบี้ หรือคณะกรรมการ
-4. ภาษาไทยสุภาพ นอบน้อม มีหางเสียง (ครับ/ค่ะ)`;
+1. ตอบตรงคำถามทันที สั้นกระชับได้ใจความ ชัดเจน ไม่ต้องเกริ่นยาว
+2. ใช้ข้อมูลตามจริงจากฐานข้อมูลข้างต้นเสมอ เช่น ผู้ใหญ่บ้านชื่อนายธนพล เสนบี้ (โทร 081-234-5678), คณะกรรมการ 15 ท่าน, ข่าวประกาศ, วันเวลากิจกรรม, รายการตลาดชุมชน
+3. ภาษาไทยสุภาพ นอบน้อม มีหางเสียง (ครับ/ค่ะ)`;
 
     const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-3.8-flash',
+      model: 'gemini-flash-latest',
       contents: prompt,
       config: {
-        systemInstruction,
-        thinkingConfig: {
-          thinkingLevel: ThinkingLevel.LOW
-        }
+        systemInstruction
       }
     });
 
+    let hasChunk = false;
     for await (const chunk of responseStream) {
       if (chunk.text) {
+        hasChunk = true;
         res.write(`data: ${JSON.stringify({ text: chunk.text })}\n\n`);
       }
     }
+
+    if (!hasChunk) {
+      const fallbackAns = generateLocalVillageAnswer(prompt, villageContext);
+      res.write(`data: ${JSON.stringify({ text: fallbackAns })}\n\n`);
+    }
+
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {
-    console.error('Error in /api/chat/stream:', error);
-    res.write(`data: ${JSON.stringify({ error: error.message || 'Streaming failed' })}\n\n`);
+    console.warn('Gemini stream error, serving smart local village answer:', error?.message);
+    const fallbackAns = generateLocalVillageAnswer(prompt, villageContext);
+    res.write(`data: ${JSON.stringify({ text: fallbackAns })}\n\n`);
     res.write('data: [DONE]\n\n');
     res.end();
   }
@@ -96,19 +151,17 @@ ${JSON.stringify(villageContext || {}, null, 2)}
 
 // Gemini AI Assistant Standard endpoint (fallback)
 app.post('/api/chat', async (req, res) => {
+  const { prompt, villageContext } = req.body;
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ error: 'Prompt is required' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.json({ reply: generateLocalVillageAnswer(prompt, villageContext) });
+  }
+
   try {
-    const { prompt, villageContext } = req.body;
-    if (!prompt || typeof prompt !== 'string') {
-      return res.status(400).json({ error: 'Prompt is required' });
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(200).json({
-        reply: 'ขออภัยครับ ยังไม่ได้ตั้งค่า GEMINI_API_KEY ในระบบ กรุณาตรวจสอบการตั้งค่า Secrets เพื่อเปิดใช้งาน AI ผู้ช่วยเต็มรูปแบบครับ'
-      });
-    }
-
     const ai = new GoogleGenAI({
       apiKey,
       httpOptions: {
@@ -118,36 +171,29 @@ app.post('/api/chat', async (req, res) => {
       }
     });
 
-    const systemInstruction = `คุณคือ "น้องสมาร์ท ม.4" (SMART AI ASSISTANT) ผู้ช่วยดิจิทัลอัจฉริยะคิดเร็วตอบไวประจำ "บ้านหนองบัวคำมูล หมู่ที่ 4"
+    const systemInstruction = `คุณคือ "น้องสมาร์ท ม.4" (SMART AI ASSISTANT) ผู้ช่วยดิจิทัลประจำบ้าน "บ้านหนองบัวคำมูล หมู่ที่ 4"
 ผู้ใหญ่บ้าน / ประธานกรรมการหมู่บ้านชื่อ: นายธนพล เสนบี้ (โทร 081-234-5678)
 
 ข้อมูลปัจจุบันดึงสดจากระบบฐานข้อมูล Cloud Firestore:
 ${JSON.stringify(villageContext || {}, null, 2)}
 
-กฎการตอบแบบรวดเร็ว:
-1. ตอบตรงคำถามทันที สั้นกระชับได้ใจความ ชัดเจน ไม่ต้องเกริ่นยาว
-2. ให้ข้อมูลตามฐานข้อมูลจริง เช่น ผู้ใหญ่บ้านชื่อนายธนพล เสนบี้ (โทร 081-234-5678)
-3. หากไม่มีข้อมูลในระบบ ให้ตอบอย่างสุภาพสั้นๆ ว่า "ขณะนี้ยังไม่มีข้อมูลเรื่องนี้ในระบบฐานข้อมูลหมู่บ้านครับ" และแนะนำให้ติดต่อผู้ใหญ่บ้าน นายธนพล เสนบี้ หรือคณะกรรมการ
-4. ภาษาไทยสุภาพ นอบน้อม มีหางเสียง (ครับ/ค่ะ)`;
+กฎการตอบ:
+1. ตอบตรงคำถามทันที สั้นกระชับได้ใจความ ชัดเจน
+2. ภาษาไทยสุภาพ นอบน้อม มีหางเสียง (ครับ/ค่ะ)`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: 'gemini-flash-latest',
       contents: prompt,
       config: {
-        systemInstruction,
-        thinkingConfig: {
-          thinkingLevel: ThinkingLevel.LOW
-        }
+        systemInstruction
       }
     });
 
-    const reply = response.text || 'ขออภัยครับ ไม่สามารถสร้างคำตอบได้ในขณะนี้ กรุณาลองใหม่อีกครั้งครับ';
+    const reply = response.text || generateLocalVillageAnswer(prompt, villageContext);
     res.json({ reply });
   } catch (error: any) {
-    console.error('Error in /api/chat:', error);
-    res.status(500).json({
-      error: error.message || 'Failed to process AI chat request'
-    });
+    console.warn('Gemini chat error, serving fallback:', error?.message);
+    res.json({ reply: generateLocalVillageAnswer(prompt, villageContext) });
   }
 });
 
