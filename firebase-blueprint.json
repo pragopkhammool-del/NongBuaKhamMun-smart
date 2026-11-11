@@ -98,6 +98,18 @@
       },
       "required": ["title", "content", "category"]
     },
+    "NewsSource": {
+      "title": "NewsSource",
+      "description": "External news RSS or media source for village feed",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 150 },
+        "url": { "type": "string", "maxLength": 2048 },
+        "category": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] }
+      },
+      "required": ["name", "url"]
+    },
     "Event": {
       "title": "Event",
       "description": "Village calendar event or activity",
@@ -215,6 +227,10 @@
     "/news/{newsId}": {
       "schema": "News",
       "description": "Village news and announcements"
+    },
+    "/news_sources/{sourceId}": {
+      "schema": "NewsSource",
+      "description": "News RSS and media feeds"
     },
     "/events/{eventId}": {
       "schema": "Event",

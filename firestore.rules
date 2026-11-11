@@ -67,6 +67,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // External news RSS/media sources
+    match /news_sources/{sourceId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
     // Village calendar events
     match /events/{eventId} {
       allow read: if true;
