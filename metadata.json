@@ -1,0 +1,11 @@
+{
+  "name": "SMART MOO4 - ข่าวสาร บ้านหนองบัวคำมูลหมู่ที่ 4",
+  "description": "ระบบแพลตฟอร์มดิจิทัลบริหารจัดการหมู่บ้านอัจฉริยะ ข่าวสาร แจ้งเหตุ แผนที่ ตลาดชุมชน และผู้ช่วย AI บ้านหนองบัวคำมูล หมู่ที่ 4",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

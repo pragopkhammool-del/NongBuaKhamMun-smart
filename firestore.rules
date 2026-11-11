@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'pragopkhammool@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Admin collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Village residents census
+    match /residents/{residentId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Village committee & leadership
+    match /village_committee/{memberId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Citizen Voice incident reports
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isAdmin() || (isSignedIn() && resource.data.reporterId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Report updates / timeline
+    match /report_updates/{updateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // News and announcements
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Village calendar events
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Event registrations
+    match /event_registrations/{registrationId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // Community marketplace
+    match /marketplace_items/{itemId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isAdmin() || (isSignedIn() && resource.data.sellerId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.sellerId == request.auth.uid);
+    }
+
+    // Help requests (People Helping People)
+    match /help_requests/{requestId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // Volunteers
+    match /volunteers/{volunteerId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // Public projects & budget transparency
+    match /public_projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Community forum posts
+    match /community_posts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+    }
+
+    // Forum comments
+    match /post_comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+    }
+
+    // Community polls
+    match /polls/{pollId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Poll votes
+    match /poll_votes/{voteId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+    }
+
+    // Notifications
+    match /notifications/{notifId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // System settings
+    match /system_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

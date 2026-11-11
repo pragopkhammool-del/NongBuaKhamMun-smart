@@ -1,0 +1,240 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role and contact information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "firstName": { "type": "string", "maxLength": 100 },
+        "lastName": { "type": "string", "maxLength": 100 },
+        "houseNumber": { "type": "string", "maxLength": 50 },
+        "moo": { "type": "string", "maxLength": 10 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "photoURL": { "type": "string", "maxLength": 2048 },
+        "role": { "type": "string", "enum": ["GUEST", "MEMBER", "VERIFIED_MEMBER", "MODERATOR", "ADMIN", "SUPER_ADMIN"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "firstName", "lastName", "role"]
+    },
+    "Resident": {
+      "title": "Resident",
+      "description": "Official village census record",
+      "type": "object",
+      "properties": {
+        "residentCode": { "type": "string", "maxLength": 30 },
+        "prefix": { "type": "string", "maxLength": 20 },
+        "firstName": { "type": "string", "maxLength": 100 },
+        "lastName": { "type": "string", "maxLength": 100 },
+        "houseNumber": { "type": "string", "maxLength": 50 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "householdCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["ACTIVE", "MOVED_OUT", "DECEASED"] },
+        "photoURL": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["residentCode", "firstName", "lastName", "houseNumber"]
+    },
+    "CommitteeMember": {
+      "title": "CommitteeMember",
+      "description": "Village leader or committee personnel",
+      "type": "object",
+      "properties": {
+        "prefix": { "type": "string", "maxLength": 20 },
+        "firstName": { "type": "string", "maxLength": 100 },
+        "lastName": { "type": "string", "maxLength": 100 },
+        "roleCategory": { "type": "string", "enum": ["HEADMAN", "ASSISTANT", "COMMITTEE", "HEALTH_VOLUNTEER", "VOLUNTEER", "OTHER"] },
+        "position": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "responsibilities": { "type": "string", "maxLength": 500 },
+        "termStart": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "photoURL": { "type": "string", "maxLength": 2048 },
+        "order": { "type": "number" }
+      },
+      "required": ["firstName", "lastName", "roleCategory", "position"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Citizen Voice incident report",
+      "type": "object",
+      "properties": {
+        "reportNumber": { "type": "string", "maxLength": 30 },
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "imageUrl": { "type": "string", "maxLength": 2048 },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "locationName": { "type": "string", "maxLength": 200 },
+        "urgency": { "type": "string", "enum": ["LOW", "NORMAL", "HIGH", "EMERGENCY"] },
+        "isAnonymous": { "type": "boolean" },
+        "reporterName": { "type": "string", "maxLength": 100 },
+        "reporterPhone": { "type": "string", "maxLength": 20 },
+        "reporterId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["RECEIVED", "PENDING_CHECK", "IN_PROGRESS", "COORDINATED", "RESOLVED", "CANNOT_PROCEED"] },
+        "statusNote": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reportNumber", "title", "category", "description", "status"]
+    },
+    "News": {
+      "title": "News",
+      "description": "Village news and official announcements",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "category": { "type": "string", "maxLength": 50 },
+        "coverUrl": { "type": "string", "maxLength": 2048 },
+        "priority": { "type": "string", "enum": ["NORMAL", "IMPORTANT", "URGENT"] },
+        "isPinned": { "type": "boolean" },
+        "author": { "type": "string", "maxLength": 100 },
+        "published": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "category"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Village calendar event or activity",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "eventDate": { "type": "string", "maxLength": 50 },
+        "startTime": { "type": "string", "maxLength": 20 },
+        "endTime": { "type": "string", "maxLength": 20 },
+        "location": { "type": "string", "maxLength": 200 },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "coverUrl": { "type": "string", "maxLength": 2048 },
+        "organizer": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["UPCOMING", "ONGOING", "COMPLETED", "CANCELLED"] },
+        "registeredCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "eventDate", "location"]
+    },
+    "MarketplaceItem": {
+      "title": "MarketplaceItem",
+      "description": "Local community marketplace listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "price": { "type": "number" },
+        "unit": { "type": "string", "maxLength": 50 },
+        "category": { "type": "string", "maxLength": 50 },
+        "imageUrl": { "type": "string", "maxLength": 2048 },
+        "sellerName": { "type": "string", "maxLength": 100 },
+        "sellerPhone": { "type": "string", "maxLength": 20 },
+        "sellerId": { "type": "string", "maxLength": 128 },
+        "locationArea": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["AVAILABLE", "SOLD", "CLOSED"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "price", "sellerName", "sellerPhone", "sellerId"]
+    },
+    "HelpRequest": {
+      "title": "HelpRequest",
+      "description": "Mutual neighbor assistance request",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string", "maxLength": 50 },
+        "urgency": { "type": "string", "enum": ["NORMAL", "URGENT", "EMERGENCY"] },
+        "contactName": { "type": "string", "maxLength": 100 },
+        "contactPhone": { "type": "string", "maxLength": 20 },
+        "area": { "type": "string", "maxLength": 100 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["OPEN", "HELPING", "COMPLETED"] },
+        "volunteerCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "category", "contactName"]
+    },
+    "PublicProject": {
+      "title": "PublicProject",
+      "description": "Village transparency development project and budget",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "budget": { "type": "number" },
+        "budgetSource": { "type": "string", "maxLength": 100 },
+        "responsibleAgency": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "startDate": { "type": "string", "maxLength": 50 },
+        "endDate": { "type": "string", "maxLength": 50 },
+        "progress": { "type": "number" },
+        "status": { "type": "string", "enum": ["PROPOSED", "WAITING_APPROVAL", "APPROVED", "IN_PROGRESS", "COMPLETED", "DELAYED", "CANCELLED"] },
+        "beforeImageUrl": { "type": "string", "maxLength": 2048 },
+        "duringImageUrl": { "type": "string", "maxLength": 2048 },
+        "afterImageUrl": { "type": "string", "maxLength": 2048 },
+        "documentUrl": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["title", "budget", "responsibleAgency", "status"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "People Forum community topic",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "content": { "type": "string", "maxLength": 3000 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "authorName", "authorId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and RBAC"
+    },
+    "/residents/{residentId}": {
+      "schema": "Resident",
+      "description": "Village census records"
+    },
+    "/village_committee/{memberId}": {
+      "schema": "CommitteeMember",
+      "description": "Village leadership and committee"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Citizen Voice reports"
+    },
+    "/news/{newsId}": {
+      "schema": "News",
+      "description": "Village news and announcements"
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Village calendar events"
+    },
+    "/marketplace_items/{itemId}": {
+      "schema": "MarketplaceItem",
+      "description": "Community marketplace listings"
+    },
+    "/help_requests/{requestId}": {
+      "schema": "HelpRequest",
+      "description": "Neighbor assistance requests"
+    },
+    "/public_projects/{projectId}": {
+      "schema": "PublicProject",
+      "description": "Village development projects and budget"
+    },
+    "/community_posts/{postId}": {
+      "schema": "CommunityPost",
+      "description": "Community discussion forum posts"
+    }
+  }
+}
