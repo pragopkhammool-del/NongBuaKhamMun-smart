@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AlertCircle, 
   Sparkles, 
@@ -15,7 +15,11 @@ import {
   Clock, 
   ShieldAlert,
   Flame,
-  Volume2
+  Volume2,
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudLightning
 } from 'lucide-react';
 import type { 
   NewsItem, 
@@ -51,6 +55,56 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   const [trackingResult, setTrackingResult] = useState<Report | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const [weather, setWeather] = useState({
+    temp: 32,
+    tempMax: 35,
+    tempMin: 24,
+    rainProb: 20,
+    condition: 'มีเมฆบางส่วน / อากาศร้อน',
+    icon: <Sun className="w-7 h-7 text-amber-300" />
+  });
+
+  useEffect(() => {
+    async function fetchWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=16.505663&longitude=103.005112&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FBangkok');
+        const data = await res.json();
+        if (data && data.current && data.daily) {
+          const currentTemp = Math.round(data.current.temperature_2m);
+          const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+          const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+          const rain = data.daily.precipitation_probability_max?.[0] ?? 15;
+          const wcode = data.current.weather_code;
+          
+          let cond = 'แดดจัด / ท้องฟ้าแจ่มใส';
+          let icn = <Sun className="w-7 h-7 text-amber-300" />;
+          if (wcode >= 50 && wcode <= 67) {
+            cond = 'ฝนตกปรอยๆ / มีฝนฟ้าคะนอง';
+            icn = <CloudRain className="w-7 h-7 text-sky-300" />;
+          } else if (wcode >= 1 && wcode <= 3) {
+            cond = 'มีเมฆบางส่วน / อากาศสบาย';
+            icn = <Cloud className="w-7 h-7 text-emerald-200" />;
+          } else if (wcode >= 71) {
+            cond = 'ฝนฟ้าคะนอง / ฝนตกหนัก';
+            icn = <CloudLightning className="w-7 h-7 text-amber-300" />;
+          }
+
+          setWeather({
+            temp: currentTemp,
+            tempMax: maxTemp,
+            tempMin: minTemp,
+            rainProb: rain,
+            condition: cond,
+            icon: icn
+          });
+        }
+      } catch (err) {
+        console.warn('Weather fetch warning:', err);
+      }
+    }
+    fetchWeather();
+  }, []);
+
   // Statistics
   const totalReports = reports.length;
   const inProgressReports = reports.filter(r => r.status === 'IN_PROGRESS' || r.status === 'COORDINATED').length;
@@ -80,10 +134,10 @@ export const HomeTab: React.FC<HomeTabProps> = ({
     <div className="space-y-6 pb-20 animate-fadeIn">
       {/* Hero Welcome Banner */}
       <div 
-        className={`relative rounded-3xl overflow-hidden bg-gradient-to-br ${currentTheme.bgGradient} text-white p-6 sm:p-8 shadow-xl transition-all duration-300`}
+        className={`relative rounded-3xl overflow-hidden bg-gradient-to-br ${currentTheme.bgGradient} text-white p-6 sm:p-8 shadow-xl transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4`}
       >
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-44 h-44 rounded-full bg-emerald-400/10 blur-2xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl">
+        <div className="relative z-10 max-w-xl">
           <div className="inline-flex items-center space-x-1.5 bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-emerald-100 mb-3 border border-white/10">
             <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
             <span>หมู่บ้านทันสมัย ข่าวสารทั่วถึง สร้างชุมชนน่าอยู่</span>
@@ -114,6 +168,33 @@ export const HomeTab: React.FC<HomeTabProps> = ({
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>ถาม AI หมู่บ้าน</span>
             </button>
+          </div>
+        </div>
+
+        {/* Real-time Weather Widget at Top Right (Transparent, no background box) */}
+        <div className="relative z-10 flex flex-col items-start md:items-end text-left md:text-right flex-shrink-0 self-stretch md:self-auto justify-between md:justify-center pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+          <div className="flex items-center space-x-3">
+            <div>
+              <div className="text-3xl sm:text-4xl font-black tracking-tight flex items-center md:justify-end space-x-2">
+                <span>{weather.temp}°C</span>
+                <span className="drop-shadow-md">{weather.icon}</span>
+              </div>
+              <p className="text-xs sm:text-sm font-bold text-emerald-100 mt-0.5">
+                {weather.condition}
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center space-x-2.5 text-xs text-emerald-200 font-medium">
+            <span className="flex items-center space-x-1">
+              <CloudRain className="w-3.5 h-3.5 text-sky-300" />
+              <span>โอกาสฝนตก {weather.rainProb}%</span>
+            </span>
+            <span>•</span>
+            <span>สูงสุด {weather.tempMax}° / ต่ำสุด {weather.tempMin}°</span>
+          </div>
+          <div className="mt-1 text-[11px] text-emerald-200/80 flex items-center space-x-1">
+            <MapPin className="w-3 h-3 text-emerald-300" />
+            <span>ต.คูคำ อ.ซำสูง จ.ขอนแก่น (ม.4)</span>
           </div>
         </div>
       </div>
